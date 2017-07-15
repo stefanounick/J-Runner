@@ -57,7 +57,6 @@ namespace JRunner
         public static Nand.VNand vnand;
         public static bool usingVNand = false;
         Regex objAlphaPattern = new Regex("[a-fA-F0-9]{32}$");
-        private bool x360USBDetected = false;
         #endregion
 
         #region Initialization
@@ -151,7 +150,6 @@ namespace JRunner
             xPanel.loadFil += xPanel_loadFil;
             xPanel.updateSourc += xPanel_updateSourc;
             xPanel.UpdateProgres += updateProgress;
-            xPanel.DriveMode += xPanel_DriveMode;
             xPanel.getmb += xPanel_getmb;
             nandInfo.DragDropChanged += nandInfo_DragDropChanged;
             nandx.UpdateProgres += updateProgress;
@@ -164,31 +162,6 @@ namespace JRunner
             ldInfo.doCompar += ldInfo_doCompar;
             ldInfo.UpdateAdditional += ldInfo_UpdateAdditional;
 
-#if Dev
-            driveinfo.RefreshClick += driveinfo_RefreshClick;
-            driveinfo.IntroClick += driveinfo_IntroClick;
-            driveinfo.OutroClick += driveinfo_OutroClick;
-            driveinfo.ReadClick += driveinfo_ReadClick;
-            driveinfo.EraseClick += driveinfo_EraseClick;
-            driveinfo.WriteClick += driveinfo_WriteClick;
-            driveinfo.SPIClick += driveinfo_SPIClick;
-            driveinfo.SelectionChanged += driveinfo_SelectionChanged;
-
-            dTools.LOEraseClick += dTools_LOEraseClick;
-            dTools.PhatKeyClick += dTools_PhatKeyClick;
-            dTools.BenQULClick += dTools_BenQULClick;
-            dTools.SlimKeyClick += dTools_SlimKeyClick;
-            dTools.SlimUnlockClick += dTools_SlimUnlockClick;
-            dTools.SammyUnlockClick += dTools_SammyUnlockClick;
-
-            fwInfo.SpoofClick += fwInfo_SpoofClick;
-            fwInfo.VerifyKeySClick += fwInfo_VerifyKeySClick;
-            fwInfo.LTUClick += fwInfo_LTUClick;
-            fwInfo.UpdateTargetTxt += fwInfo_UpdateTargetTxt;
-            fwInfo.UpdateClear += fwInfo_UpdateClear;
-            fwInfo.FixSerialClick += fwInfo_FixSerialClick;
-            fwInfo.ManualSpoofClick += fwInfo_ManualSpoofClick;
-#endif
         }
 
         private void deviceinit()
@@ -212,10 +185,6 @@ namespace JRunner
                         nTools.setImage(global::JRunner.Properties.Resources.JRP);
                         jRPToolStripMenuItem.Visible = true;
                         device = 1;
-                    }
-                    else if (devic.Vid == 0x11d4 && devic.Pid == 0x8333)
-                    {
-                        x360USBDetected = true;
                     }
                 }
             }
@@ -472,77 +441,6 @@ namespace JRunner
 
         #endregion
 
-#if Dev
-        void NandMode()
-        {
-            jf.Dispose();
-            jf = null;
-            driveinfo.clearAll();
-            listInfo.Remove(driveinfo);
-            pnlInfo.Controls.Remove(driveinfo);
-            pnlInfo.Controls.Add(listInfo[listInfo.Count - 1]);
-
-            fwInfo.clearSource();
-            fwInfo.clearTarget();
-            txtFilePath1.Text = variables.filename1 = "";
-            txtFilePath2.Text = variables.filename2 = "";
-            listTools.Remove(fwInfo);
-            pnlTools.Controls.Remove(fwInfo);
-            pnlTools.Controls.Add(listTools[listTools.Count - 1]);
-
-            listExtra.Remove(dTools);
-            pnlExtra.Controls.Remove(dTools);
-            pnlExtra.Controls.Add(listExtra[listExtra.Count - 1]);
-
-            btnLoadFile2.Text = "Load Extra";
-            lblCpuKey.Text = "CPU Key";
-            groupBox8.Enabled = true;
-            comparebutton.Text = "Nand Compare";
-            variables.current_mode = variables.JR_MODE.MODEJR;
-
-            ThreadStart thr = delegate { (new Firmware.CK3i()).doStuff(Firmware.CK3i.Commands.MANUAL); };
-            new Thread(thr).Start();
-        }
-#endif
-        void xPanel_DriveMode()
-        {
-#if Dev
-            pnlInfo.Controls.Clear();
-            pnlInfo.Controls.Add(driveinfo);
-            if (listInfo.Contains(driveinfo)) listInfo.Remove(driveinfo);
-            listInfo.Add(driveinfo);
-
-            pnlTools.Controls.Clear();
-            pnlTools.Controls.Add(fwInfo);
-            if (listTools.Contains(fwInfo)) listTools.Remove(fwInfo);
-            listTools.Add(fwInfo);
-
-            pnlExtra.Controls.Clear();
-            pnlExtra.Controls.Add(dTools);
-            if (listExtra.Contains(dTools)) listExtra.Remove(dTools);
-            listExtra.Add(dTools);
-
-            btnLoadFile2.Text = "Load Target";
-            lblCpuKey.Text = "DVD Key";
-            groupBox8.Enabled = false;
-            comparebutton.Text = "Nand Mode";
-            variables.current_mode = variables.JR_MODE.MODEFW;
-            jf = new Firmware.JF(x360USBDetected);
-            jf.StatusC += jf_StatusC;
-            jf.TabUpdate += jf_TabUpdate;
-            jf.FlashchipUpdate += jf_FlashchipUpdate;
-            jf.DrivePropertiesUpdate += jf_DrivePropertiesUpdate;
-            jf.SPIButtonEnable += jf_SPIButtonEnable;
-            jf.SPIButtonUpdate += jf_SPIButtonUpdate;
-            jf.SaveFileDialog += saveFile;
-            jf.TargetTextBoxUpdate += jf_TargetTextBoxUpdate;
-            jf.TypeUpdate += jf_TypeUpdate;
-            jf.UpdateBloc += updateBlocks;
-            jf.UpdateProgres += updateProgress;
-#else
-            if (x360USBDetected) { }
-#endif
-        }
 
 
         void jf_TargetTextBoxUpdate(string filename)
@@ -599,211 +497,6 @@ namespace JRunner
         {
             DashLaunchVersion.Text = progress;
         }
-
-        #region JF
-#if Dev
-        #region JF class
-        void jf_TypeUpdate(Firmware.X360USB.Drive_Types types)
-        {
-            driveinfo.setType(types);
-        }
-
-        void jf_SPIButtonUpdate(byte status)
-        {
-            driveinfo.setSPIbutton(status);
-        }
-
-        void jf_SPIButtonEnable(bool enable)
-        {
-            driveinfo.enableSPIbutton(enable);
-        }
-
-        void jf_DrivePropertiesUpdate(Firmware.X360USB.DriveProperties d)
-        {
-            driveinfo.setDriveProperties(d);
-        }
-
-        void jf_TabUpdate(Firmware.FW.fw f, Firmware.JF.fwFile ff)
-        {
-            if (ff == Firmware.JF.fwFile.SOURCE) fwInfo.setSource(f);
-            else if (ff == Firmware.JF.fwFile.TARGET) fwInfo.setTarget(f);
-        }
-        void jf_FlashchipUpdate(Firmware.X360USB.FlashChip f)
-        {
-            driveinfo.setFlashChip(f);
-        }
-
-
-        #endregion
-
-        #region DriveTools
-
-        void dTools_SammyUnlockClick()
-        {
-            new Thread(jf.SammyUnlock).Start();
-        }
-
-        void dTools_SlimUnlockClick()
-        {
-            new Thread(jf.SlimUnlock).Start();
-        }
-
-        void dTools_BenQULClick()
-        {
-            new Thread(jf.BenQUL).Start();
-        }
-
-        void dTools_LOEraseClick()
-        {
-            new Thread(jf.LOErase).Start();
-        }
-
-        void dTools_PhatKeyClick()
-        {
-            new Thread(jf.PhatKey).Start();
-        }
-
-        void dTools_SlimKeyClick()
-        {
-            new Thread(jf.SlimKey).Start();
-        }
-
-        #endregion
-
-        #region Drive Info
-
-        void driveinfo_RefreshClick()
-        {
-            new Thread(jf.Refresh).Start();
-        }
-
-        void driveinfo_SelectionChanged()
-        {
-            if (jf != null) jf.setType(driveinfo.getType());
-        }
-
-        void driveinfo_SPIClick()
-        {
-            new Thread(jf.UnLockSPI).Start();
-        }
-
-        void driveinfo_WriteClick()
-        {
-            ThreadStart th = delegate { jf.Write(); };
-            Thread t = new Thread(th);
-            t.Start();
-        }
-
-        void driveinfo_EraseClick()
-        {
-            new Thread(jf.Erase).Start();
-        }
-
-        void driveinfo_ReadClick()
-        {
-            new Thread(jf.Read).Start();
-        }
-
-        void driveinfo_OutroClick()
-        {
-            new Thread(jf.Outro).Start();
-        }
-
-        void driveinfo_IntroClick()
-        {
-            ThreadStart th = delegate { jf.Intro(); };
-            Thread t = new Thread(th);
-            t.Start();
-        }
-
-        #endregion
-
-        #region FW Info
-
-        void fwInfo_VerifyKeySClick(Firmware.JF.fwFile f)
-        {
-            ThreadStart th = delegate { jf.FWKeyVer(f); };
-            Thread t = new Thread(th);
-            t.Start();
-        }
-
-        void fwInfo_UpdateClear(bool source)
-        {
-            if (source)
-            {
-                variables.filename1 = "";
-                txtFilePath1.Text = "";
-            }
-            else
-            {
-                variables.filename2 = "";
-                txtFilePath2.Text = "";
-            }
-        }
-
-        void fwInfo_SpoofClick()
-        {
-            jf.SpoofSourceToTarget();
-        }
-
-        void fwInfo_LTUClick()
-        {
-            FileInfo fi = new FileInfo(variables.filename1);
-            if (nand.ok)
-            {
-                if (nand.cpukeyverification(nand._cpukey))
-                {
-                    byte[] fcrt = nand.exctractFSfile("fcrt.bin");
-                    if (fcrt != null)
-                    {
-
-                        byte[] t = Firmware.JF.responses(fcrt, Oper.StringToByteArray(nand._cpukey), nand.ki.dvdkey);
-
-                        if (t != null)
-                        {
-
-                            ThreadStart th = delegate { jf.CreateLTU(t, Oper.StringToByteArray(nand.ki.dvdkey)); };
-                            Thread thr = new Thread(th);
-                            thr.Start();
-                        }
-                    }
-                }
-            }
-            else if (fi.Length == 0x2542)
-            {
-                ThreadStart th = delegate { jf.CreateLTU(File.ReadAllBytes(variables.filename1), Oper.StringToByteArray(txtCPUKey.Text)); };
-                Thread t = new Thread(th);
-                t.Start();
-            }
-            else
-            {
-                ThreadStart th = delegate { jf.CreateLTU(new byte[0x2542], Oper.StringToByteArray(txtCPUKey.Text)); };
-                Thread t = new Thread(th);
-                t.Start();
-            }
-        }
-
-        void fwInfo_UpdateTargetTxt(string filename)
-        {
-            txtFilePath2.Text = filename;
-            variables.filename2 = filename;
-            File.WriteAllBytes(filename, jf.fwTarget.fwArray);
-        }
-
-        void fwInfo_ManualSpoofClick()
-        {
-            throw new NotImplementedException();
-        }
-
-        void fwInfo_FixSerialClick()
-        {
-            throw new NotImplementedException();
-        }
-
-        #endregion
-
-#endif
-        #endregion
 
         #endregion
 
@@ -1633,20 +1326,9 @@ namespace JRunner
         void nand_init()
         {
             //erasevariables();
-#if Dev
-            if (variables.current_mode == variables.JR_MODE.MODEFW)
-            {
-                fwInfo.setSource(jf.fwInit(Firmware.JF.fwFile.SOURCE));
-            }
-            else
-            {
-                ThreadStart starter = delegate { nandinit(); };
-                new Thread(starter).Start();
-            }
-#else
+
             ThreadStart starter = delegate { nandinit(); };
             new Thread(starter).Start();
-#endif
         }
 
         void erasevariables()
@@ -2981,23 +2663,12 @@ namespace JRunner
         {
             loadfile(ref variables.filename2, ref this.txtFilePath2);
             if (variables.debugme) Console.WriteLine("filename2/currentdir = {0}", variables.filename2);
-#if Dev
-            if (variables.current_mode == variables.JR_MODE.MODEFW)
-            {
-                fwInfo.setTarget(jf.fwInit(Firmware.JF.fwFile.TARGET));
-            }
-#endif
+
         }
 
         void comparebutton_Click(object sender, System.EventArgs e)
         {
-            if (comparebutton.Text.Contains("Nand Mode"))
-            {
-#if Dev
-                NandMode();
-#endif
-            }
-            else new Thread(comparenands).Start();
+               new Thread(comparenands).Start();
         }
 
         #endregion
@@ -3139,12 +2810,6 @@ namespace JRunner
 
             this.txtFilePath2.Text = s[0];
             variables.filename2 = s[0];
-#if Dev
-            if (variables.current_mode == variables.JR_MODE.MODEFW)
-            {
-                fwInfo.setTarget(jf.fwInit(Firmware.JF.fwFile.TARGET));
-            }
-#endif
         }
         void txtFilePath2_DragEnter(object sender, DragEventArgs e)
         {
@@ -3398,15 +3063,6 @@ namespace JRunner
                         }
                         device = 2;
                     }
-                    else if (e.mDevice.IdVendor == 0x11d4 && e.mDevice.IdProduct == 0x8333)
-                    {
-                        x360USBDetected = true;
-                        //if (jf != null) jf.X360USBDetected(true);
-                    }
-                    else if (e.mDevice.IdVendor == 0x11d4 && e.mDevice.IdProduct == 0x8339)
-                    {
-                        //if (jf != null) jf.CK3iDetected(true);
-                    }
                     //Console.WriteLine(e.mDevice.Name);
                 }
                 else if (e.EventType == EventType.DeviceRemoveComplete)
@@ -3427,15 +3083,6 @@ namespace JRunner
                         if (!DemoN.DemonDetected) nTools.setImage(null);
                         jRPToolStripMenuItem.Visible = false;
                         device = 0;
-                    }
-                    else if (e.mDevice.IdVendor == 0x11d4 && e.mDevice.IdProduct == 0x8333)
-                    {
-                        x360USBDetected = false;
-                        //if (jf != null) jf.X360USBDetected(false);
-                    }
-                    else if (e.mDevice.IdVendor == 0x11d4 && e.mDevice.IdProduct == 0x8339)
-                    {
-                        //if (jf != null) jf.CK3iDetected(false);
                     }
                 }
             }
